@@ -12,6 +12,29 @@ npm install @yves/inline-svg
 
 Peer dependency: React 18 or 19. Runtime Node support is `>=18`.
 
+## Local playground
+
+This repository includes a small Next.js playground at `playground/next` for manual testing before publishing or pushing release branches. It covers static/imported SVG URLs, a local route-handler substitute for a remote SVG URL, SSR markup rendering, sanitizer behavior, `currentColor` styling, and dimension handling. The playground uses Next.js 15 and requires Node `>=18.18`.
+
+Run it from a fresh checkout with:
+
+```sh
+npm install
+npm --prefix playground/next install
+npm --prefix playground/next run install:package
+npm --prefix playground/next run dev
+```
+
+Then open <http://localhost:3000>. The `install:package` step packs the local package into a temporary tarball so the playground exercises the publishable `dist/` output instead of a symlinked source checkout. If you change package source, rerun `npm --prefix playground/next run install:package` and restart the playground. For a production-mode SSR check, run:
+
+```sh
+npm --prefix playground/next run install:package
+npm --prefix playground/next run build
+npm --prefix playground/next run start
+```
+
+The remote URL panel intentionally uses `/api/remote-icon` so the demo works offline while exercising the same browser fetch/sanitize path as a remote CDN SVG.
+
 ## React usage
 
 ```tsx

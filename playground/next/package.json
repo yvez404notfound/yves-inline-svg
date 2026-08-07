@@ -1,0 +1,27 @@
+{
+  "name": "@yves/inline-svg-next-playground",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:package": "rm -rf .local-pkg && mkdir -p .local-pkg && TARBALL=$(npm pack ../.. --pack-destination .local-pkg --silent) && npm install --no-save ./.local-pkg/$TARBALL",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "15.5.23",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "postcss": "8.5.26",
+    "sharp": "0.35.3"
+  }
+}
