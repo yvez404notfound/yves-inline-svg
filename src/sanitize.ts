@@ -313,20 +313,19 @@ function applyRootSvgOptions(svg: string, options: PrepareSvgOptions): string {
     setAttribute(attributes, 'height', '100%');
   }
 
-  let body = closingAndBody;
+  let body = closingAndBody.replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '');
 
-  if (options.title !== undefined) {
-    body = body.replace(/<title\b[^>]*>[\s\S]*?<\/title>/gi, '');
+  deleteAttribute(attributes, 'role');
+  deleteAttribute(attributes, 'tabindex');
+  deleteAttributesWithPrefix(attributes, 'aria-');
+  setAttribute(attributes, 'focusable', 'false');
 
-    if (options.title.length > 0) {
-      setAttribute(attributes, 'role', 'img');
-      setAttribute(attributes, 'aria-label', options.title);
-      body = `<title>${escapeText(options.title)}</title>${body}`;
-    } else {
-      deleteAttribute(attributes, 'role');
-      deleteAttribute(attributes, 'aria-label');
-      setAttribute(attributes, 'aria-hidden', 'true');
-    }
+  if (options.title !== undefined && options.title.length > 0) {
+    setAttribute(attributes, 'role', 'img');
+    setAttribute(attributes, 'aria-label', options.title);
+    body = `<title>${escapeText(options.title)}</title>${body}`;
+  } else {
+    setAttribute(attributes, 'aria-hidden', 'true');
   }
 
   return `<svg${stringifyAttributes(attributes)}>${body}`;
@@ -378,6 +377,16 @@ function deleteAttribute(attributes: ParsedAttribute[], name: string): void {
 
   for (let index = attributes.length - 1; index >= 0; index -= 1) {
     if (attributes[index]?.name.toLowerCase() === normalized) {
+      attributes.splice(index, 1);
+    }
+  }
+}
+
+function deleteAttributesWithPrefix(attributes: ParsedAttribute[], prefix: string): void {
+  const normalized = prefix.toLowerCase();
+
+  for (let index = attributes.length - 1; index >= 0; index -= 1) {
+    if (attributes[index]?.name.toLowerCase().startsWith(normalized)) {
       attributes.splice(index, 1);
     }
   }

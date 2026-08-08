@@ -28,19 +28,61 @@ afterEach(() => {
   dom.window.close();
 });
 
-test('renders sanitized inline markup immediately and preserves viewBox/title', () => {
-  const { container } = render(
-    <InlineSVG svg='<svg viewBox="0 0 10 10"><path d="M0 0h10v10z" /></svg>' title="Search" />
+test('renders a named SVG as one accessible image and preserves viewBox/title', () => {
+  const { container, getAllByRole } = render(
+    <InlineSVG
+      svg='<svg viewBox="0 0 10 10" role="presentation" aria-label="Wrong source label" aria-hidden="true" tabindex="0" focusable="true"><title>Wrong source title</title><path d="M0 0h10v10z" /></svg>'
+      title="Search"
+    />
   );
 
   const shell = container.querySelector('[data-inline-svg="loaded"]');
   const svg = shell?.querySelector('svg');
+  const namedImages = getAllByRole('img', { name: 'Search' });
 
+  assert.equal(namedImages.length, 1);
+  assert.equal(shell?.getAttribute('role'), null);
+  assert.equal(shell?.getAttribute('aria-label'), null);
   assert.ok(svg);
   assert.equal(svg.getAttribute('viewBox'), '0 0 10 10');
   assert.equal(svg.getAttribute('role'), 'img');
   assert.equal(svg.getAttribute('aria-label'), 'Search');
+  assert.equal(svg.getAttribute('aria-hidden'), null);
+  assert.equal(svg.getAttribute('focusable'), 'false');
+  assert.equal(svg.getAttribute('tabindex'), null);
   assert.equal(svg.querySelector('title')?.textContent, 'Search');
+});
+
+test('treats omitted title as decorative and hides source labels', () => {
+  const { container, queryByRole } = render(
+    <InlineSVG svg='<svg viewBox="0 0 10 10" role="img" aria-label="Source label" tabindex="0" focusable="true"><title>Source title</title><path d="M0 0h10v10z" /></svg>' />
+  );
+
+  const svg = container.querySelector('svg');
+
+  assert.equal(queryByRole('img'), null);
+  assert.ok(svg);
+  assert.equal(svg.getAttribute('aria-hidden'), 'true');
+  assert.equal(svg.getAttribute('role'), null);
+  assert.equal(svg.getAttribute('aria-label'), null);
+  assert.equal(svg.getAttribute('focusable'), 'false');
+  assert.equal(svg.getAttribute('tabindex'), null);
+  assert.equal(svg.querySelector('title'), null);
+});
+
+test('treats empty title as decorative', () => {
+  const { container, queryByRole } = render(
+    <InlineSVG svg='<svg viewBox="0 0 10 10"><title>Source title</title><path d="M0 0h10v10z" /></svg>' title="" />
+  );
+
+  const svg = container.querySelector('svg');
+
+  assert.equal(queryByRole('img'), null);
+  assert.ok(svg);
+  assert.equal(svg.getAttribute('aria-hidden'), 'true');
+  assert.equal(svg.getAttribute('role'), null);
+  assert.equal(svg.getAttribute('focusable'), 'false');
+  assert.equal(svg.querySelector('title'), null);
 });
 
 test('removes script-like SVG input and event handler attributes', () => {

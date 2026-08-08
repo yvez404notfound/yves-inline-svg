@@ -28,7 +28,7 @@ export interface InlineSVGProps {
   height?: number | string;
   className?: string;
   style?: CSSProperties;
-  /** Accessible title. Pass an empty string to hide the SVG from assistive technology. */
+  /** Accessible image title. Omit or pass an empty string to mark the SVG decorative. */
   title?: string;
   /** Remove source width/height attributes. Dimension props also replace those source attributes with SVG fill sizing. */
   removeDimensions?: boolean;
@@ -36,7 +36,7 @@ export interface InlineSVGProps {
   currentColor?: boolean;
   /** URL loading strategy. Lazy loading uses IntersectionObserver when available. */
   loading?: InlineSVGLoading;
-  /** Stable content shown while a URL is loading or if loading/sanitization fails. */
+  /** Stable content shown while a URL is loading or if loading/sanitization fails; make it accessible if it conveys meaning. */
   fallback?: ReactNode;
   onLoad?: (event: InlineSVGLoadEvent) => void;
   onError?: (error: Error) => void;

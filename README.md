@@ -129,7 +129,16 @@ export default async function Page() {
 - Without `color`, source `fill` and `stroke` values are preserved by default. Set `currentColor={true}` to force rewriting for an inherited CSS color, or `currentColor={false}` to preserve source paints even when `color` is supplied. The opt-out only disables rewriting; source paints that already use `currentColor` still inherit the wrapper color. The rewrite preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` references for gradients, masks, and patterns.
 - `size` sets both wrapper width and height. Explicit `width` or `height` overrides that axis on the wrapper. When the wrapper is sized by these props (or inline `style.width`/`style.height`), the inner SVG uses `width="100%"`/`height="100%"` for the matching axes so source dimensions do not fight the wrapper.
 - `removeDimensions` removes source root `width`/`height` while preserving `viewBox`. This applies to raw markup string variables passed with `svg`; without `removeDimensions` or wrapper sizing, source dimensions are preserved.
-- `title` inserts an accessible `<title>` and `aria-label`; `title=""` marks the SVG hidden.
+- `title` controls image semantics: meaningful text names the SVG image; omitted or empty titles make it decorative.
+
+## Accessibility
+
+`InlineSVG` is designed to support WCAG Level A usage for SVG image behavior when used correctly; it does not make an entire app conformant by itself.
+
+- Meaningful `title` text renders the inner SVG as a single accessible image with `role="img"`, an accessible name, and a `<title>` element. The wrapper `<span>` is not given its own image role or label.
+- If `title` is omitted or `title=""`, the SVG is treated as decorative with `aria-hidden="true"`; source `<title>`/ARIA labeling on the SVG is stripped during preparation.
+- SVGs are not keyboard-focusable by default (`focusable="false"` and no root `tabindex`). Wrap the component in a labeled button/link when the icon is part of an interactive control.
+- `fallback` content is rendered as supplied while URL SVGs load or fail. Use accessible fallback text or labels when that fallback conveys meaning; use hidden/decorative fallback for purely visual placeholders.
 
 ## Security notes
 
