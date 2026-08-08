@@ -195,7 +195,7 @@ export function prepareSvgMarkup(markup: string, options: PrepareSvgOptions = {}
     throw new Error('InlineSVG expected markup containing a root <svg> element.');
   }
 
-  const colorReady = options.currentColor !== false ? rewritePaintAttributesToCurrentColor(extracted) : extracted;
+  const colorReady = options.currentColor === true ? rewritePaintAttributesToCurrentColor(extracted) : extracted;
   return applyRootSvgOptions(colorReady, options);
 }
 

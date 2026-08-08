@@ -2,7 +2,7 @@
 
 This repository contains the initial v1 implementation of `@yves/inline-svg`: a small React/Next.js package for rendering sanitized inline SVGs from server-provided SVG markup or browser-fetched SVG URLs.
 
-The package is intentionally narrow. v1 owns the React component API, Next.js-friendly client boundary, URL loading shell, SSR behavior for raw markup, sanitizer baseline, dimension helpers, and default `currentColor` color rewriting with an explicit opt-out. Avoid expanding it into a broad SVG loader unless the public scope changes.
+The package is intentionally narrow. v1 owns the React component API, Next.js-friendly client boundary, URL loading shell, SSR behavior for raw markup, sanitizer baseline, dimension helpers, and `color`-driven `currentColor` rewriting that preserves source colors when no color is supplied. Avoid expanding it into a broad SVG loader unless the public scope changes.
 
 ## Repository map
 
@@ -43,7 +43,7 @@ Current sanitizer ownership:
 - The allowlist is deliberately SVG-focused and excludes inline `style` attributes and event handlers.
 - URL-bearing attributes are restricted to `http`/`https` schemes where the sanitizer applies scheme checks.
 - A post-sanitize pass removes attributes whose `url(...)` references are not local fragment IDs or `http(s)` URLs.
-- `currentColor` rewriting defaults on, only changes literal `fill`/`stroke` paint attributes, and intentionally preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` paint references.
+- `currentColor` rewriting is requested by the component when the `color` prop is supplied or `currentColor={true}` is explicit. It only changes literal `fill`/`stroke` paint attributes and intentionally preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` paint references.
 
 Sanitization is a baseline, not permission to trust arbitrary third-party SVGs. Remote `src` values are fetched in the browser, sanitized, and injected after hydration; callers should still prefer trusted origins, size limits where appropriate, CSP, and review of user- or brand-visible assets. If you broaden the allowlist, add tests for both the newly allowed behavior and representative unsafe input that must still be stripped.
 
@@ -54,6 +54,6 @@ When changing props or rendering behavior:
 1. Update `InlineSVGProps` and exported types in `src/InlineSVG.tsx`/`src/index.ts` as needed.
 2. Preserve the SSR boundary: `svg` markup can render inline on the server; URL `src` sources should keep a deterministic fallback shell until browser fetch completes.
 3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source `width`/`height`; `size`, `width`, and `height` should then apply rendered dimensions.
-4. Keep color rewriting default-on with the `currentColor={false}` opt-out. `color` should remain a wrapper CSS color, and source paints should be preserved when `currentColor` is false.
+4. Keep color rewriting automatic when `color` is supplied, preserve source paints when `color` is absent, and honor the `currentColor={false}` opt-out. `color` should remain a wrapper CSS color, so source paints that already use `currentColor` still inherit it.
 5. Add or update behavior tests in `test/InlineSVG.test.tsx`. Prefer observable rendering, callback, sanitization, fetch, and server-rendering assertions over source-text checks.
 6. Update README examples and this guide when public usage or contributor workflow changes.
