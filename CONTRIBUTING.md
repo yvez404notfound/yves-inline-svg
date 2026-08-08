@@ -15,8 +15,7 @@ The package is intentionally narrow. v1 owns the React component API, Next.js-fr
   - wrapper styling, load/error callbacks, and `data-inline-svg` state attributes.
 - `src/sanitize.ts` owns SVG preparation before anything is injected into the DOM. Keep sanitizer allowlists, unsafe URL-function stripping, title/dimension transforms, and `currentColor` paint rewriting centralized there.
 - `test/InlineSVG.test.tsx` contains the executable behavior coverage using `node:test`, Testing Library, JSDOM, and `react-dom/server`.
-- `playground/next` is a local Next.js App Router playground for manual checks against the packed package output.
-- `package.json`, `tsconfig*.json`, and the lockfiles define the publishable package shape and validation commands.
+- `package.json`, `tsconfig*.json`, and the lockfile define the publishable package shape and validation commands.
 
 ## Common commands
 
@@ -30,28 +29,9 @@ npm run typecheck
 npm run lint
 ```
 
-`lint` currently aliases TypeScript checking. `prepack` runs `npm run build`, so `npm pack` should produce `dist/` from the same build path used by the playground.
+`lint` currently aliases TypeScript checking. `prepack` runs `npm run build`, so `npm pack` should produce `dist/` from the publishable package build.
 
-## Next playground
-
-The playground verifies behavior that is awkward to cover with unit tests alone: Next.js static/imported SVG URLs, public asset URLs, a route-handler stand-in for a remote SVG URL, server-resolved markup, sanitizer behavior, `currentColor`, and dimension handling.
-
-Run it with:
-
-```sh
-npm install
-npm --prefix playground/next install
-npm --prefix playground/next run install:package
-npm --prefix playground/next run dev
-```
-
-Then open <http://localhost:3000>. The `install:package` script packs the repository and installs the tarball into the playground so the app exercises publishable `dist/` output, not source files. After changing package source, rerun `npm --prefix playground/next run install:package` and restart Next. For a production-mode check, run:
-
-```sh
-npm --prefix playground/next run install:package
-npm --prefix playground/next run build
-npm --prefix playground/next run start
-```
+There is intentionally no in-repository playground in this package shape. Validate changes with the package commands above and with behavior tests that exercise the public component API.
 
 ## Security and trust model
 
@@ -76,5 +56,4 @@ When changing props or rendering behavior:
 3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source `width`/`height`; `size`, `width`, and `height` should then apply rendered dimensions.
 4. Keep color rewriting opt-in. `color` should remain a wrapper CSS color, and source paints should only be rewritten when `currentColor` is true.
 5. Add or update behavior tests in `test/InlineSVG.test.tsx`. Prefer observable rendering, callback, sanitization, fetch, and server-rendering assertions over source-text checks.
-6. Update the Next playground when a change is best validated manually in a real Next app.
-7. Update README examples and this guide when public usage or contributor workflow changes.
+6. Update README examples and this guide when public usage or contributor workflow changes.
