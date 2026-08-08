@@ -86,33 +86,43 @@ test('handles removeDimensions, size, width, and height while preserving viewBox
   assert.equal(svg.getAttribute('viewBox'), '0 0 16 12');
 });
 
-test('rewrites fill and stroke colors to currentColor only when requested', () => {
+test('rewrites fill and stroke colors to currentColor by default and supports opt-out', () => {
   const source = `
     <svg viewBox="0 0 10 10">
       <defs><linearGradient id="g"><stop offset="0" stop-color="#fff" /></linearGradient></defs>
       <path data-kind="paint" d="M0 0h10" fill="#123456" stroke="red" />
       <path data-kind="preserve" d="M0 1h10" fill="none" stroke="url(#g)" />
+      <path data-kind="css-var" d="M0 2h10" fill="var(--icon-fill)" stroke="currentColor" />
     </svg>
   `;
 
   const { container, rerender } = render(<InlineSVG svg={source} color="tomato" />);
   let painted = container.querySelector('[data-kind="paint"]');
-
-  assert.equal((container.firstElementChild as HTMLElement).style.color, 'tomato');
-  assert.equal(painted?.getAttribute('fill'), '#123456');
-  assert.equal(painted?.getAttribute('stroke'), 'red');
-
-  rerender(<InlineSVG svg={source} color="rebeccapurple" currentColor />);
-  painted = container.querySelector('[data-kind="paint"]');
-  const preserved = container.querySelector('[data-kind="preserve"]');
+  let preserved = container.querySelector('[data-kind="preserve"]');
+  let cssVar = container.querySelector('[data-kind="css-var"]');
   const stop = container.querySelector('stop');
 
-  assert.equal((container.firstElementChild as HTMLElement).style.color, 'rebeccapurple');
+  assert.equal((container.firstElementChild as HTMLElement).style.color, 'tomato');
   assert.equal(painted?.getAttribute('fill'), 'currentColor');
   assert.equal(painted?.getAttribute('stroke'), 'currentColor');
   assert.equal(preserved?.getAttribute('fill'), 'none');
   assert.equal(preserved?.getAttribute('stroke'), 'url(#g)');
+  assert.equal(cssVar?.getAttribute('fill'), 'var(--icon-fill)');
+  assert.equal(cssVar?.getAttribute('stroke'), 'currentColor');
   assert.equal(stop?.getAttribute('stop-color'), '#fff');
+
+  rerender(<InlineSVG svg={source} color="rebeccapurple" currentColor={false} />);
+  painted = container.querySelector('[data-kind="paint"]');
+  preserved = container.querySelector('[data-kind="preserve"]');
+  cssVar = container.querySelector('[data-kind="css-var"]');
+
+  assert.equal((container.firstElementChild as HTMLElement).style.color, 'rebeccapurple');
+  assert.equal(painted?.getAttribute('fill'), '#123456');
+  assert.equal(painted?.getAttribute('stroke'), 'red');
+  assert.equal(preserved?.getAttribute('fill'), 'none');
+  assert.equal(preserved?.getAttribute('stroke'), 'url(#g)');
+  assert.equal(cssVar?.getAttribute('fill'), 'var(--icon-fill)');
+  assert.equal(cssVar?.getAttribute('stroke'), 'currentColor');
 });
 
 test('fetches imported/static URL objects and reports sanitized load events', async () => {
@@ -175,7 +185,6 @@ test('server rendering inlines sanitized svg markup', () => {
   const html = renderToString(
     <InlineSVG
       svg='<svg width="20" height="20" viewBox="0 0 20 20" onload="bad()"><script>bad()</script><path fill="#000" d="M0 0h20v20z" /></svg>'
-      currentColor
       removeDimensions
       title="Server icon"
     />

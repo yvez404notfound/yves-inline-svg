@@ -18,7 +18,7 @@ export interface InlineSVGProps {
   src?: InlineSVGSource;
   /** Raw SVG markup. Supplying this enables deterministic server rendering. */
   svg?: string;
-  /** CSS color applied to the component wrapper; use with currentColor for monochrome icons. */
+  /** CSS color applied to the component wrapper; literal fill/stroke paints use it by default. */
   color?: string;
   /** Convenience square width/height for the rendered SVG. */
   size?: number | string;
@@ -32,7 +32,7 @@ export interface InlineSVGProps {
   title?: string;
   /** Remove source width/height attributes before applying explicit size/width/height props. */
   removeDimensions?: boolean;
-  /** Rewrite fill/stroke paint attributes to currentColor, preserving none and url(...) paints. */
+  /** Rewrite fill/stroke paint attributes to currentColor. Defaults to true; set false to preserve source paints. */
   currentColor?: boolean;
   /** URL loading strategy. Lazy loading uses IntersectionObserver when available. */
   loading?: InlineSVGLoading;
@@ -50,7 +50,7 @@ interface PreparedState {
 export function InlineSVG({
   className,
   color,
-  currentColor = false,
+  currentColor = true,
   fallback = null,
   height,
   loading = 'eager',

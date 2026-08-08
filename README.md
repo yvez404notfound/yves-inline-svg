@@ -2,7 +2,7 @@
 
 Small React/Next.js component for rendering sanitized inline SVGs from either raw SVG markup or SVG URLs.
 
-It is intentionally narrow: v1 focuses on React and Next.js, static/imported SVG asset URLs, remote SVG URLs, SSR-aware rendering boundaries, a sanitizer baseline, and opt-in `currentColor` styling for icon use cases.
+It is intentionally narrow: v1 focuses on React and Next.js, static/imported SVG asset URLs, remote SVG URLs, SSR-aware rendering boundaries, a sanitizer baseline, and default `currentColor` styling for icon use cases with an explicit opt-out.
 
 Contributors can read [CONTRIBUTING.md](./CONTRIBUTING.md) for the codebase map, package validation commands, and sanitizer ownership guidance.
 
@@ -32,14 +32,13 @@ export function StatusIcon() {
       title="Complete"
       size={20}
       color="seagreen"
-      currentColor
       removeDimensions
     />
   );
 }
 ```
 
-`svg` markup is sanitized and can be rendered during SSR. `currentColor` is opt-in: without it, `color` only affects SVGs that already use `currentColor`.
+`svg` markup is sanitized and can be rendered during SSR. Literal `fill` and `stroke` paint attributes are rewritten to `currentColor` by default, so `color` changes the rendered SVG color. Pass `currentColor={false}` to preserve source colors.
 
 ## Static/imported SVG asset URLs
 
@@ -96,7 +95,7 @@ Remote SVGs are fetched, sanitized, then injected. Prefer URLs you control and k
 import InlineSVG from '@yves/inline-svg';
 
 export default function Page() {
-  return <InlineSVG src="/icons/check.svg" title="Ready" size={24} currentColor color="#16a34a" />;
+  return <InlineSVG src="/icons/check.svg" title="Ready" size={24} color="#16a34a" />;
 }
 ```
 
@@ -126,8 +125,8 @@ export default async function Page() {
 ## Styling and color props
 
 - `className` and `style` apply to the stable wrapper `<span>`.
-- `color` sets the wrapper CSS `color`, which cascades into SVGs using `currentColor`.
-- `currentColor` rewrites literal `fill` and `stroke` attributes to `currentColor`. It preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` references for gradients, masks, and patterns.
+- `color` sets the wrapper CSS `color`; by default, literal `fill` and `stroke` attributes are rewritten to `currentColor` so this color cascades into the SVG.
+- `currentColor` defaults to `true`. Set `currentColor={false}` to preserve source `fill` and `stroke` values. The rewrite preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` references for gradients, masks, and patterns.
 - `size` sets both rendered SVG width and height. Explicit `width` or `height` overrides that axis.
 - `removeDimensions` removes source `width`/`height` before applying explicit dimensions, while preserving `viewBox`.
 - `title` inserts an accessible `<title>` and `aria-label`; `title=""` marks the SVG hidden.
@@ -145,4 +144,4 @@ Existing packages such as broad inline-SVG loaders solve many edge cases. `@yves
 - a small Next.js-aware React API;
 - an explicit SSR-aware source boundary (`svg` renders on the server, `src` fetches in the browser);
 - a built-in sanitizer baseline rather than documentation-only safety guidance;
-- opt-in `currentColor` styling instead of rewriting every SVG or competing feature-for-feature with larger inline-SVG packages.
+- default `currentColor` styling with an explicit opt-out instead of competing feature-for-feature with larger inline-SVG packages.
