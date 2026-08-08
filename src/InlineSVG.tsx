@@ -231,10 +231,7 @@ export function InlineSVG({
     });
   }, [hasInlineMarkup, normalizedSrc, onLoad, prepared.markup]);
 
-  const wrapperStyle = useMemo(
-    () => buildWrapperStyle({ color, height, size, style, width }),
-    [color, height, size, style, width]
-  );
+  const wrapperStyle = useMemo(() => buildWrapperStyle({ color, style }), [color, style]);
   const status = prepared.markup ? 'loaded' : currentError ? 'error' : isFetching || normalizedSrc ? 'loading' : 'idle';
 
   const shellProps = {
@@ -269,28 +266,10 @@ function normalizeSrc(src: InlineSVGSource | undefined): string | undefined {
   return undefined;
 }
 
-function buildWrapperStyle({
-  color,
-  height,
-  size,
-  style,
-  width
-}: {
-  color?: string;
-  height?: number | string;
-  size?: number | string;
-  style?: CSSProperties;
-  width?: number | string;
-}): CSSProperties | undefined {
-  if (!style && color === undefined && size === undefined && width === undefined && height === undefined) {
-    return undefined;
-  }
-
+function buildWrapperStyle({ color, style }: { color?: string; style?: CSSProperties }): CSSProperties {
   return {
-    ...style,
-    ...(size !== undefined ? { height: size, width: size } : null),
-    ...(width !== undefined ? { width } : null),
-    ...(height !== undefined ? { height } : null),
+    display: 'block',
+    ...(style ?? {}),
     ...(color !== undefined ? { color } : null)
   };
 }

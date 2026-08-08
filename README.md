@@ -124,10 +124,10 @@ export default async function Page() {
 
 ## Styling and color props
 
-- `className` and `style` apply to the stable wrapper `<span>`.
+- `className` and `style` apply to the stable wrapper `<span>`, which uses `display: block` by default. Override `style.display` if you need different layout.
 - `color` sets the wrapper CSS `color`; when supplied, literal `fill` and `stroke` attributes are rewritten to `currentColor` so this color cascades into the SVG.
 - Without `color`, source `fill` and `stroke` values are preserved by default. Set `currentColor={true}` to force rewriting for an inherited CSS color, or `currentColor={false}` to preserve source paints even when `color` is supplied. The opt-out only disables rewriting; source paints that already use `currentColor` still inherit the wrapper color. The rewrite preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` references for gradients, masks, and patterns.
-- `size` sets both rendered SVG width and height. Explicit `width` or `height` overrides that axis.
+- `size` sets both rendered SVG width and height on the `<svg>` element. Explicit `width` or `height` overrides that axis. These dimension props are not applied as wrapper `<span>` styles.
 - `removeDimensions` removes source root `width`/`height` before applying explicit dimensions, while preserving `viewBox`. This applies to raw markup string variables passed with `svg`; without it, source dimensions are preserved.
 - `title` inserts an accessible `<title>` and `aria-label`; `title=""` marks the SVG hidden.
 

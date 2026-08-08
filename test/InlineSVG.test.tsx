@@ -75,8 +75,12 @@ test('handles raw markup variable dimensions, removeDimensions, size, width, and
   `;
 
   const { container, rerender } = render(<InlineSVG svg={heartSvg} />);
+  let shell = container.firstElementChild as HTMLElement;
   let svg = container.querySelector('svg');
 
+  assert.equal(shell.style.display, 'block');
+  assert.equal(shell.style.width, '');
+  assert.equal(shell.style.height, '');
   assert.ok(svg);
   assert.equal(svg.getAttribute('width'), '24');
   assert.equal(svg.getAttribute('height'), '24');
@@ -91,8 +95,12 @@ test('handles raw markup variable dimensions, removeDimensions, size, width, and
   assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
 
   rerender(<InlineSVG svg={heartSvg} removeDimensions size={24} height="2rem" />);
+  shell = container.firstElementChild as HTMLElement;
   svg = container.querySelector('svg');
 
+  assert.equal(shell.style.display, 'block');
+  assert.equal(shell.style.width, '');
+  assert.equal(shell.style.height, '');
   assert.ok(svg);
   assert.equal(svg.getAttribute('width'), '24');
   assert.equal(svg.getAttribute('height'), '2rem');
