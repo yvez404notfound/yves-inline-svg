@@ -53,7 +53,7 @@ When changing props or rendering behavior:
 
 1. Update `InlineSVGProps` and exported types in `src/InlineSVG.tsx`/`src/index.ts` as needed.
 2. Preserve the SSR boundary: `svg` markup can render inline on the server; URL `src` sources should keep a deterministic fallback shell until browser fetch completes.
-3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source `width`/`height`; `size`, `width`, and `height` should then apply rendered dimensions.
+3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source root `width`/`height` for raw `svg` markup variables and URL-fetched markup; without that prop, source dimensions should be preserved. `size`, `width`, and `height` should then apply rendered dimensions.
 4. Keep color rewriting automatic when `color` is supplied, preserve source paints when `color` is absent, and honor the `currentColor={false}` opt-out. `color` should remain a wrapper CSS color, so source paints that already use `currentColor` still inherit it.
 5. Add or update behavior tests in `test/InlineSVG.test.tsx`. Prefer observable rendering, callback, sanitization, fetch, and server-rendering assertions over source-text checks.
 6. Update README examples and this guide when public usage or contributor workflow changes.

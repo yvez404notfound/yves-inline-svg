@@ -38,7 +38,7 @@ export function StatusIcon() {
 }
 ```
 
-`svg` markup is sanitized and can be rendered during SSR. When you pass `color`, literal `fill` and `stroke` paint attributes are rewritten to `currentColor` so that color takes effect. Without `color`, source colors are preserved by default. Pass `currentColor={false}` to preserve source colors even when `color` is supplied.
+`svg` markup is sanitized and can be rendered during SSR. The example passes `removeDimensions` because raw SVG string variables keep source `width`/`height` unless you opt in to removing them. When you pass `color`, literal `fill` and `stroke` paint attributes are rewritten to `currentColor` so that color takes effect. Without `color`, source colors are preserved by default. Pass `currentColor={false}` to preserve source colors even when `color` is supplied.
 
 ## Static/imported SVG asset URLs
 
@@ -128,7 +128,7 @@ export default async function Page() {
 - `color` sets the wrapper CSS `color`; when supplied, literal `fill` and `stroke` attributes are rewritten to `currentColor` so this color cascades into the SVG.
 - Without `color`, source `fill` and `stroke` values are preserved by default. Set `currentColor={true}` to force rewriting for an inherited CSS color, or `currentColor={false}` to preserve source paints even when `color` is supplied. The opt-out only disables rewriting; source paints that already use `currentColor` still inherit the wrapper color. The rewrite preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` references for gradients, masks, and patterns.
 - `size` sets both rendered SVG width and height. Explicit `width` or `height` overrides that axis.
-- `removeDimensions` removes source `width`/`height` before applying explicit dimensions, while preserving `viewBox`.
+- `removeDimensions` removes source root `width`/`height` before applying explicit dimensions, while preserving `viewBox`. This applies to raw markup string variables passed with `svg`; without it, source dimensions are preserved.
 - `title` inserts an accessible `<title>` and `aria-label`; `title=""` marks the SVG hidden.
 
 ## Security notes

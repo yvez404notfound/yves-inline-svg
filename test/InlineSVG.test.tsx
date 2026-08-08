@@ -67,23 +67,36 @@ test('removes script-like SVG input and event handler attributes', () => {
   assert.equal(use?.getAttribute('href'), null);
 });
 
-test('handles removeDimensions, size, width, and height while preserving viewBox', () => {
-  const source = '<svg width="16" height="12" viewBox="0 0 16 12"><path d="M0 0h16v12z" /></svg>';
-  const { container, rerender } = render(<InlineSVG svg={source} removeDimensions />);
+test('handles raw markup variable dimensions, removeDimensions, size, width, and height while preserving viewBox', () => {
+  const heartSvg = `
+    <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#111" d="M12 21s-7-4.35-9.33-8.2C.7 9.55 2.44 5 6.2 5c2.05 0 3.2 1.15 3.8 2.05C10.6 6.15 11.75 5 13.8 5c3.76 0 5.5 4.55 3.53 7.8C19 16.65 12 21 12 21z" />
+    </svg>
+  `;
+
+  const { container, rerender } = render(<InlineSVG svg={heartSvg} />);
   let svg = container.querySelector('svg');
+
+  assert.ok(svg);
+  assert.equal(svg.getAttribute('width'), '24');
+  assert.equal(svg.getAttribute('height'), '24');
+  assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
+
+  rerender(<InlineSVG svg={heartSvg} removeDimensions />);
+  svg = container.querySelector('svg');
 
   assert.ok(svg);
   assert.equal(svg.hasAttribute('width'), false);
   assert.equal(svg.hasAttribute('height'), false);
-  assert.equal(svg.getAttribute('viewBox'), '0 0 16 12');
+  assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
 
-  rerender(<InlineSVG svg={source} removeDimensions size={24} height="2rem" />);
+  rerender(<InlineSVG svg={heartSvg} removeDimensions size={24} height="2rem" />);
   svg = container.querySelector('svg');
 
   assert.ok(svg);
   assert.equal(svg.getAttribute('width'), '24');
   assert.equal(svg.getAttribute('height'), '2rem');
-  assert.equal(svg.getAttribute('viewBox'), '0 0 16 12');
+  assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
 });
 
 test('preserves source colors without color, rewrites with color, and supports opt-out', () => {
