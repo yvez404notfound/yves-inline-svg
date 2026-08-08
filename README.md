@@ -4,6 +4,8 @@ Small React/Next.js component for rendering sanitized inline SVGs from either ra
 
 It is intentionally narrow: v1 focuses on React and Next.js, static/imported SVG asset URLs, remote SVG URLs, SSR-aware rendering boundaries, a sanitizer baseline, and opt-in `currentColor` styling for icon use cases.
 
+Contributors can read [CONTRIBUTING.md](./CONTRIBUTING.md) for the codebase map, workflow commands, playground notes, and sanitizer ownership guidance.
+
 ## Install
 
 ```sh
