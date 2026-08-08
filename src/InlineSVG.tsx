@@ -20,17 +20,17 @@ export interface InlineSVGProps {
   svg?: string;
   /** CSS color applied to the component wrapper; literal fill/stroke paints use it when supplied. */
   color?: string;
-  /** Convenience square width/height for the rendered SVG. */
+  /** Convenience square width/height for the wrapper; the inner SVG fills it. */
   size?: number | string;
-  /** Explicit rendered SVG width. Overrides size for width. */
+  /** Explicit wrapper width. Overrides size for width. */
   width?: number | string;
-  /** Explicit rendered SVG height. Overrides size for height. */
+  /** Explicit wrapper height. Overrides size for height. */
   height?: number | string;
   className?: string;
   style?: CSSProperties;
   /** Accessible title. Pass an empty string to hide the SVG from assistive technology. */
   title?: string;
-  /** Remove source width/height attributes before applying explicit size/width/height props. */
+  /** Remove source width/height attributes. Dimension props also replace those source attributes with SVG fill sizing. */
   removeDimensions?: boolean;
   /** Rewrite fill/stroke paint attributes to currentColor. Defaults to true when color is supplied; set false to preserve source paints. */
   currentColor?: boolean;
@@ -72,6 +72,8 @@ export function InlineSVG({
   const [isFetching, setIsFetching] = useState(false);
   const hasInlineMarkup = svg !== undefined;
   const shouldRewriteToCurrentColor = currentColor ?? (color !== undefined);
+  const shouldFillSvgWidth = shouldFillWidth({ size, style, width });
+  const shouldFillSvgHeight = shouldFillHeight({ height, size, style });
 
   useEffect(() => {
     setCanFetch(loading !== 'lazy');
@@ -182,17 +184,16 @@ export function InlineSVG({
         error: null,
         markup: prepareSvgMarkup(rawMarkup, {
           currentColor: shouldRewriteToCurrentColor,
-          height,
+          fillHeight: shouldFillSvgHeight,
+          fillWidth: shouldFillSvgWidth,
           removeDimensions,
-          size,
-          title,
-          width
+          title
         })
       };
     } catch (error) {
       return { error: toError(error), markup: null };
     }
-  }, [height, rawMarkup, removeDimensions, shouldRewriteToCurrentColor, size, title, width]);
+  }, [rawMarkup, removeDimensions, shouldFillSvgHeight, shouldFillSvgWidth, shouldRewriteToCurrentColor, title]);
 
   const currentError = fetchError ?? prepared.error;
   const lastReportedError = useRef<string | null>(null);
@@ -231,7 +232,10 @@ export function InlineSVG({
     });
   }, [hasInlineMarkup, normalizedSrc, onLoad, prepared.markup]);
 
-  const wrapperStyle = useMemo(() => buildWrapperStyle({ color, style }), [color, style]);
+  const wrapperStyle = useMemo(
+    () => buildWrapperStyle({ color, height, size, style, width }),
+    [color, height, size, style, width]
+  );
   const status = prepared.markup ? 'loaded' : currentError ? 'error' : isFetching || normalizedSrc ? 'loading' : 'idle';
 
   const shellProps = {
@@ -266,12 +270,35 @@ function normalizeSrc(src: InlineSVGSource | undefined): string | undefined {
   return undefined;
 }
 
-function buildWrapperStyle({ color, style }: { color?: string; style?: CSSProperties }): CSSProperties {
+function buildWrapperStyle({
+  color,
+  height,
+  size,
+  style,
+  width
+}: {
+  color?: string;
+  height?: number | string;
+  size?: number | string;
+  style?: CSSProperties;
+  width?: number | string;
+}): CSSProperties {
   return {
     display: 'block',
     ...(style ?? {}),
+    ...(size !== undefined ? { height: size, width: size } : null),
+    ...(width !== undefined ? { width } : null),
+    ...(height !== undefined ? { height } : null),
     ...(color !== undefined ? { color } : null)
   };
+}
+
+function shouldFillWidth({ size, style, width }: { size?: number | string; style?: CSSProperties; width?: number | string }): boolean {
+  return size !== undefined || width !== undefined || style?.width !== undefined || style?.inlineSize !== undefined;
+}
+
+function shouldFillHeight({ height, size, style }: { height?: number | string; size?: number | string; style?: CSSProperties }): boolean {
+  return size !== undefined || height !== undefined || style?.height !== undefined || style?.blockSize !== undefined;
 }
 
 function isAbortError(error: unknown): boolean {

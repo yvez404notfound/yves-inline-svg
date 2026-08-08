@@ -94,16 +94,27 @@ test('handles raw markup variable dimensions, removeDimensions, size, width, and
   assert.equal(svg.hasAttribute('height'), false);
   assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
 
-  rerender(<InlineSVG svg={heartSvg} removeDimensions size={24} height="2rem" />);
+  rerender(<InlineSVG svg={heartSvg} size={24} height="2rem" />);
   shell = container.firstElementChild as HTMLElement;
   svg = container.querySelector('svg');
 
   assert.equal(shell.style.display, 'block');
-  assert.equal(shell.style.width, '');
-  assert.equal(shell.style.height, '');
+  assert.equal(shell.style.width, '24px');
+  assert.equal(shell.style.height, '2rem');
   assert.ok(svg);
-  assert.equal(svg.getAttribute('width'), '24');
-  assert.equal(svg.getAttribute('height'), '2rem');
+  assert.equal(svg.getAttribute('width'), '100%');
+  assert.equal(svg.getAttribute('height'), '100%');
+  assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
+
+  rerender(<InlineSVG svg={heartSvg} width={150} height={60} />);
+  shell = container.firstElementChild as HTMLElement;
+  svg = container.querySelector('svg');
+
+  assert.equal(shell.style.width, '150px');
+  assert.equal(shell.style.height, '60px');
+  assert.ok(svg);
+  assert.equal(svg.getAttribute('width'), '100%');
+  assert.equal(svg.getAttribute('height'), '100%');
   assert.equal(svg.getAttribute('viewBox'), '0 0 24 24');
 });
 
@@ -163,6 +174,20 @@ test('preserves source colors without color, rewrites with color, and supports o
   assert.equal(preserved?.getAttribute('stroke'), 'url(#g)');
   assert.equal(cssVar?.getAttribute('fill'), 'var(--icon-fill)');
   assert.equal(cssVar?.getAttribute('stroke'), 'currentColor');
+});
+
+test('uses wrapper style dimensions and makes SVG fill inline style sizing', () => {
+  const source = '<svg width="16" height="12" viewBox="0 0 16 12"><path d="M0 0h16v12z" /></svg>';
+  const { container } = render(<InlineSVG svg={source} style={{ height: '3rem', width: '4rem' }} />);
+  const shell = container.firstElementChild as HTMLElement;
+  const svg = container.querySelector('svg');
+
+  assert.equal(shell.style.display, 'block');
+  assert.equal(shell.style.width, '4rem');
+  assert.equal(shell.style.height, '3rem');
+  assert.equal(svg?.getAttribute('width'), '100%');
+  assert.equal(svg?.getAttribute('height'), '100%');
+  assert.equal(svg?.getAttribute('viewBox'), '0 0 16 12');
 });
 
 test('fetches imported/static URL objects and reports sanitized load events', async () => {

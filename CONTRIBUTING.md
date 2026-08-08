@@ -12,7 +12,7 @@ The package is intentionally narrow. v1 owns the React component API, Next.js-fr
   - rendering sanitized `svg` markup immediately, including during server rendering;
   - rendering a stable fallback shell for URL sources and fetching them in the browser after hydration;
   - lazy URL loading with `IntersectionObserver` when available;
-  - wrapper styling, including the block-by-default `<span>` shell, load/error callbacks, and `data-inline-svg` state attributes.
+  - wrapper styling and sizing, including the block-by-default `<span>` shell, inner SVG fill sizing, load/error callbacks, and `data-inline-svg` state attributes.
 - `src/sanitize.ts` owns SVG preparation before anything is injected into the DOM. Keep sanitizer allowlists, unsafe URL-function stripping, title/dimension transforms, and `currentColor` paint rewriting centralized there.
 - `test/InlineSVG.test.tsx` contains the executable behavior coverage using `node:test`, Testing Library, JSDOM, and `react-dom/server`.
 - `package.json`, `tsconfig*.json`, and the lockfile define the publishable package shape and validation commands.
@@ -53,7 +53,7 @@ When changing props or rendering behavior:
 
 1. Update `InlineSVGProps` and exported types in `src/InlineSVG.tsx`/`src/index.ts` as needed.
 2. Preserve the SSR boundary: `svg` markup can render inline on the server; URL `src` sources should keep a deterministic fallback shell until browser fetch completes.
-3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source root `width`/`height` for raw `svg` markup variables and URL-fetched markup; without that prop, source dimensions should be preserved. `size`, `width`, and `height` should then apply rendered dimensions on the `<svg>` element, not as wrapper `<span>` styles.
+3. Preserve `viewBox` during dimension changes. `removeDimensions` should remove source root `width`/`height` for raw `svg` markup variables and URL-fetched markup; without that prop or wrapper sizing, source dimensions should be preserved. `size`, `width`, and `height` should apply to the wrapper `<span>`, while the inner `<svg>` fills the matching wrapper axes with `100%` dimensions so source dimensions do not fight wrapper sizing.
 4. Keep color rewriting automatic when `color` is supplied, preserve source paints when `color` is absent, and honor the `currentColor={false}` opt-out. `color` should remain a wrapper CSS color, so source paints that already use `currentColor` still inherit it.
 5. Add or update behavior tests in `test/InlineSVG.test.tsx`. Prefer observable rendering, callback, sanitization, fetch, and server-rendering assertions over source-text checks.
 6. Update README examples and this guide when public usage or contributor workflow changes.

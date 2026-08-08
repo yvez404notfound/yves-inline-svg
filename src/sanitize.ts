@@ -2,11 +2,10 @@ import sanitizeHtml from 'sanitize-html';
 
 export interface PrepareSvgOptions {
   currentColor?: boolean;
-  height?: number | string;
+  fillHeight?: boolean;
+  fillWidth?: boolean;
   removeDimensions?: boolean;
-  size?: number | string;
   title?: string;
-  width?: number | string;
 }
 
 const SVG_TAGS = [
@@ -301,20 +300,17 @@ function applyRootSvgOptions(svg: string, options: PrepareSvgOptions): string {
   const closingAndBody = svg.slice(openingEnd + 1);
   const attributes = parseAttributes(openingTag.slice('<svg'.length, -1));
 
-  if (options.removeDimensions) {
+  if (options.removeDimensions || options.fillWidth || options.fillHeight) {
     deleteAttribute(attributes, 'width');
     deleteAttribute(attributes, 'height');
   }
 
-  const width = options.width ?? options.size;
-  const height = options.height ?? options.size;
-
-  if (width !== undefined) {
-    setAttribute(attributes, 'width', String(width));
+  if (options.fillWidth) {
+    setAttribute(attributes, 'width', '100%');
   }
 
-  if (height !== undefined) {
-    setAttribute(attributes, 'height', String(height));
+  if (options.fillHeight) {
+    setAttribute(attributes, 'height', '100%');
   }
 
   let body = closingAndBody;
