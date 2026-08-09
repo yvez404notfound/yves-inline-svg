@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { prepareSvgMarkup } from './sanitize.js';
+import { prepareSvgMarkup } from '#sanitize-runtime';
 
 export type InlineSVGSource = string | { src: string };
 export type InlineSVGLoading = 'eager' | 'lazy';

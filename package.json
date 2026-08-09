@@ -1,6 +1,6 @@
 {
 	"name": "yvez-inline-svg",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Small React/Next.js component for safely inlining SVG markup and URL-loaded SVGs.",
 	"keywords": [
 		"inline-svg",
@@ -23,8 +23,16 @@
 			"default": "./dist/index.js"
 		}
 	},
+	"imports": {
+		"#sanitize-runtime": {
+			"browser": "./dist/sanitize.browser.js",
+			"node": "./dist/sanitize.node.js",
+			"default": "./dist/sanitize.browser.js"
+		}
+	},
 	"files": [
 		"dist",
+		"scripts",
 		"README.md",
 		"CONTRIBUTING.md",
 		"LICENSE"
@@ -34,16 +42,18 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"test": "rm -rf .test-dist && tsc -p tsconfig.test.json && node --test .test-dist/test/*.test.js",
+		"test": "rm -rf dist .test-dist && npm run build && tsc -p tsconfig.test.json && node --test .test-dist/test/*.test.js",
 		"typecheck": "tsc --noEmit -p tsconfig.test.json",
 		"lint": "tsc --noEmit -p tsconfig.test.json",
+		"bundle:size": "npm run build && node scripts/check-browser-bundle.mjs",
 		"prepack": "npm run build"
 	},
 	"peerDependencies": {
 		"react": "^18.2.0 || ^19.0.0"
 	},
 	"dependencies": {
-		"sanitize-html": "2.17.5"
+		"dompurify": "^3.4.13",
+		"jsdom": "^26.1.0"
 	},
 	"devDependencies": {
 		"@testing-library/dom": "^10.4.1",
@@ -52,8 +62,7 @@
 		"@types/node": "^22.10.2",
 		"@types/react": "^18.3.12",
 		"@types/react-dom": "^18.3.1",
-		"@types/sanitize-html": "^2.16.1",
-		"jsdom": "^25.0.1",
+		"esbuild": "^0.28.2",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"typescript": "^5.7.2"

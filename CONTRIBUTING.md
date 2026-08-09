@@ -13,7 +13,7 @@ The package is intentionally narrow. v1 owns the React component API, Next.js-fr
   - rendering a stable fallback shell for URL sources and fetching them in the browser after hydration;
   - lazy URL loading with `IntersectionObserver` when available;
   - wrapper styling and sizing, including the block-by-default `<span>` shell, inner SVG fill sizing, load/error callbacks, and `data-inline-svg` state attributes.
-- `src/sanitize.ts` owns SVG preparation before anything is injected into the DOM. Keep sanitizer allowlists, unsafe URL-function stripping, accessibility semantics, title/dimension transforms, and `currentColor` paint rewriting centralized there.
+- `src/sanitize.ts` owns SVG preparation before anything is injected into the DOM. Keep sanitizer allowlists, URL/reference policy, accessibility semantics, title/dimension transforms, and `currentColor` paint rewriting centralized there. `src/sanitize.browser.ts` and `src/sanitize.node.ts` are the environment adapters for the browser DOMPurify runtime and the server-only DOMPurify + `jsdom` runtime.
 - `test/InlineSVG.test.tsx` contains the executable behavior coverage using `node:test`, Testing Library, JSDOM, and `react-dom/server`.
 - `package.json`, `tsconfig*.json`, and the lockfile define the publishable package shape and validation commands.
 
@@ -27,9 +27,10 @@ npm run build
 npm run test
 npm run typecheck
 npm run lint
+npm run bundle:size
 ```
 
-`lint` currently aliases TypeScript checking. `prepack` runs `npm run build`, so `npm pack` should produce `dist/` from the publishable package build.
+`lint` currently aliases TypeScript checking. `bundle:size` builds the browser entry with React externalized and fails if server-only sanitizer dependencies enter the browser metafile or the gzip budget is exceeded. `prepack` runs `npm run build`, so `npm pack` should produce `dist/` from the publishable package build.
 
 There is intentionally no in-repository playground in this package shape. Validate changes with the package commands above and with behavior tests that exercise the public component API.
 
@@ -39,12 +40,16 @@ All rendered SVG markup must pass through `prepareSvgMarkup` in `src/sanitize.ts
 
 Current sanitizer/accessibility ownership:
 
-- `sanitize-html` removes disallowed tags and attributes while preserving SVG tag/attribute casing.
-- The allowlist is deliberately SVG-focused and excludes inline `style` attributes and event handlers.
-- URL-bearing attributes are restricted to `http`/`https` schemes where the sanitizer applies scheme checks.
-- A post-sanitize pass removes attributes whose `url(...)` references are not local fragment IDs or `http(s)` URLs.
-- `currentColor` rewriting is requested by the component when the `color` prop is supplied or `currentColor={true}` is explicit. It only changes literal `fill`/`stroke` paint attributes and intentionally preserves `none`, existing `currentColor`, CSS variables, and obvious `url(...)` paint references.
+- DOMPurify removes disallowed tags and attributes using the SVG-focused allowlists in `src/sanitize.ts`; do not rely on a broad DOMPurify profile alone.
+- The browser/default package-import condition resolves to `src/sanitize.browser.ts`/`dist/sanitize.browser.js`. It must not import `jsdom`, `parse5`, `whatwg-url`, Node built-ins, or other server-only sanitizer dependencies.
+- The Node/server package-import condition resolves to `src/sanitize.node.ts`/`dist/sanitize.node.js`, the only runtime path that imports `jsdom`, preserving raw-markup SSR sanitization.
+- The allowlist excludes inline `style` attributes, `<style>`, `foreignObject`, nested HTML, and event handlers. Hooks strip `on*` attributes case-insensitively even when DOMPurify would already remove them.
+- URL-bearing attributes are local-fragment-only (`href="#id"`/`xlink:href="#id"`). `javascript:`, `data:`, protocol-relative, entity/whitespace-obfuscated, and external references are stripped.
+- A post-sanitize pass removes presentation/reference attributes whose `url(...)` values are not local fragment IDs.
+- `currentColor` rewriting is requested by the component when the `color` prop is supplied or `currentColor={true}` is explicit. It only changes literal `fill`/`stroke` paint attributes and intentionally preserves `none`, existing `currentColor`, CSS variables, and local `url(...)` paint references.
 - Accessibility semantics are applied in `applyRootSvgOptions`: meaningful `title` text creates one named inner SVG image, while omitted/empty titles are decorative (`aria-hidden="true"`); all SVGs get `focusable="false"` and root `tabindex` is removed.
+- The sanitizer corpus in `test/sanitize.test.ts` covers bypass classes; expand it whenever the allowlist or URL/reference policy changes.
+- Keep `npm run bundle:size` passing when sanitizer dependencies change. It records a reproducible esbuild command with React externalized and checks the browser metafile for heavy/server sanitizer packages.
 
 Sanitization is a baseline, not permission to trust arbitrary third-party SVGs. Remote `src` values are fetched in the browser, sanitized, and injected after hydration; callers should still prefer trusted origins, size limits where appropriate, CSP, and review of user- or brand-visible assets. If you broaden the allowlist, add tests for both the newly allowed behavior and representative unsafe input that must still be stripped.
 
