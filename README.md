@@ -178,7 +178,7 @@ Sanitization uses DOMPurify in both environments. The browser/default package-im
 
 ## Security notes
 
-This package sanitizes all SVG markup with DOMPurify before injection, using a narrow SVG tag/attribute allowlist and package-level URL checks. The sanitizer baseline strips script tags at any depth, event handler attributes, inline `<style>` and `style` CSS, `foreignObject`/nested HTML, malformed or wrong-namespace roots, `javascript:`/`data:` URLs, external references, and unsafe `url(...)` paint/reference values. Local fragment references such as gradients, clip paths, masks, filters, and symbols are preserved.
+This package sanitizes all SVG markup with DOMPurify before injection, using a narrow SVG tag/attribute allowlist and package-level URL checks. The sanitizer baseline strips script tags at any depth, event handler attributes, inline `<style>` and `style` CSS, `foreignObject`/nested HTML, `javascript:`/`data:` URLs, external references, and unsafe `url(...)` paint/reference values, and rejects malformed or wrong-namespace roots. Local fragment references such as gradients, clip paths, masks, filters, and symbols are preserved.
 
 Sanitization reduces risk; it is not a complete trust model for arbitrary third-party SVGs. Treat remote SVG URLs like other active content inputs: use trusted origins, size limits where appropriate, CSP, and review any SVGs that can affect user trust or brand presentation.
 
