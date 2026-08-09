@@ -10,7 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "#sanitize-runtime": ["./src/sanitize.browser.ts"]
+    }
   },
   "include": ["src"]
 }

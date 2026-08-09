@@ -99,7 +99,7 @@ export function RemoteBadge() {
 }
 ```
 
-Remote SVGs are fetched, sanitized, then injected. Prefer URLs you control and keep normal browser defenses such as CSP in place.
+Remote SVGs are fetched in the browser, sanitized with the browser DOMPurify path, then injected. Prefer URLs you control and keep normal browser defenses such as CSP in place.
 
 ## Next.js examples
 
@@ -156,6 +156,8 @@ export default async function Page() {
 - `src="/icon.svg"` or `src="https://..."`: the server renders a stable `<span data-inline-svg="loading">` shell with your `fallback`; the browser fetches, sanitizes, and swaps in the SVG after hydration.
 - Imported/static asset URLs are still URLs. If you need the actual SVG in server-rendered HTML, resolve the file to markup yourself and pass `svg`.
 
+Sanitization uses DOMPurify in both environments. The browser/default package-import condition loads only the browser DOMPurify runtime. The Node/server condition loads a separate DOMPurify + `jsdom` runtime so raw `svg` markup can still be sanitized during SSR without putting `jsdom` or its parser dependencies into browser bundles.
+
 ## Styling and color props
 
 - `className` and `style` apply to the stable wrapper `<span>`, which uses `display: block` by default. Override `style.display` if you need different layout.
@@ -176,9 +178,13 @@ export default async function Page() {
 
 ## Security notes
 
-This package sanitizes all SVG markup with `sanitize-html` before injection and configures it for SVG case preservation. The sanitizer baseline strips script tags, event handler attributes, inline style attributes from supplied SVGs, and `javascript:`-style URL attributes covered by the SVG allowlist.
+This package sanitizes all SVG markup with DOMPurify before injection, using a narrow SVG tag/attribute allowlist and package-level URL checks. The sanitizer baseline strips script tags at any depth, event handler attributes, inline `<style>` and `style` CSS, `foreignObject`/nested HTML, `javascript:`/`data:` URLs, external references, and unsafe `url(...)` paint/reference values, and rejects malformed or wrong-namespace roots. Local fragment references such as gradients, clip paths, masks, filters, and symbols are preserved.
 
 Sanitization reduces risk; it is not a complete trust model for arbitrary third-party SVGs. Treat remote SVG URLs like other active content inputs: use trusted origins, size limits where appropriate, CSP, and review any SVGs that can affect user trust or brand presentation.
+
+## Bundle-size goal
+
+The default safe browser path is expected to stay lightweight: React is externalized as a peer, DOMPurify is the only sanitizer included in browser bundles, and server-only sanitizer dependencies must remain out of browser metafiles. Contributors can run `npm run bundle:size` to build a minified browser bundle with React externalized and fail on known heavy/server sanitizer packages or a gzip budget regression.
 
 ## Why this exists
 

@@ -1,4 +1,4 @@
-import sanitizeHtml from 'sanitize-html';
+import type { Config, DOMPurify } from 'dompurify';
 
 export interface PrepareSvgOptions {
   currentColor?: boolean;
@@ -7,6 +7,16 @@ export interface PrepareSvgOptions {
   removeDimensions?: boolean;
   title?: string;
 }
+
+export interface SvgSanitizerRuntime {
+  DOMParser: typeof DOMParser;
+  purifier: DOMPurify;
+}
+
+export type SvgSanitizerRuntimeResolver = () => SvgSanitizerRuntime;
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const XLINK_NAMESPACE = 'http://www.w3.org/1999/xlink';
 
 const SVG_TAGS = [
   'svg',
@@ -64,7 +74,6 @@ const SVG_TAGS = [
 ];
 
 const SVG_ATTRIBUTES = [
-  'aria-*',
   'class',
   'clip-path',
   'clip-rule',
@@ -73,7 +82,6 @@ const SVG_ATTRIBUTES = [
   'cx',
   'cy',
   'd',
-  'data-*',
   'dx',
   'dy',
   'edgeMode',
@@ -163,39 +171,105 @@ const SVG_ATTRIBUTES = [
   'y2'
 ];
 
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: SVG_TAGS,
-  allowedAttributes: {
-    '*': SVG_ATTRIBUTES
-  },
-  allowedSchemes: ['http', 'https'],
-  allowedSchemesAppliedToAttributes: ['href', 'src', 'xlink:href'],
-  allowProtocolRelative: false,
-  parser: {
-    lowerCaseAttributeNames: false,
-    lowerCaseTags: false
-  }
+const SVG_SANITIZE_CONFIG: Config = {
+  ALLOW_ARIA_ATTR: true,
+  ALLOW_DATA_ATTR: true,
+  ALLOW_UNKNOWN_PROTOCOLS: false,
+  ALLOWED_ATTR: SVG_ATTRIBUTES,
+  ALLOWED_NAMESPACES: [SVG_NAMESPACE, XLINK_NAMESPACE],
+  ALLOWED_TAGS: SVG_TAGS,
+  FORBID_ATTR: ['style'],
+  FORBID_TAGS: [
+    'script',
+    'style',
+    'foreignObject',
+    'foreignobject',
+    'iframe',
+    'object',
+    'embed',
+    'link',
+    'meta',
+    'base'
+  ],
+  NAMESPACE: SVG_NAMESPACE,
+  PARSER_MEDIA_TYPE: 'image/svg+xml',
+  RETURN_TRUSTED_TYPE: false
 };
+
+const DIRECT_REFERENCE_ATTRIBUTES = new Set(['href', 'xlink:href']);
 
 interface ParsedAttribute {
   name: string;
   rawValue: string | null;
 }
 
-export function prepareSvgMarkup(markup: string, options: PrepareSvgOptions = {}): string {
-  if (typeof markup !== 'string' || markup.trim().length === 0) {
-    throw new Error('InlineSVG expected non-empty SVG markup.');
-  }
+export function configureSvgPurifier(purifier: DOMPurify): DOMPurify {
+  purifier.addHook('uponSanitizeAttribute', (_node, hookEvent) => {
+    const name = hookEvent.attrName.toLowerCase();
+    const value = hookEvent.attrValue ?? '';
 
-  const sanitized = removeUnsafeUrlFunctionAttributes(sanitizeHtml(markup, SANITIZE_OPTIONS));
-  const extracted = extractSvgElement(sanitized);
+    if (name.startsWith('on') || name === 'style') {
+      hookEvent.keepAttr = false;
+      return;
+    }
 
-  if (!extracted) {
-    throw new Error('InlineSVG expected markup containing a root <svg> element.');
-  }
+    if (name === 'xmlns' && value !== SVG_NAMESPACE) {
+      hookEvent.keepAttr = false;
+      return;
+    }
 
-  const colorReady = options.currentColor === true ? rewritePaintAttributesToCurrentColor(extracted) : extracted;
-  return applyRootSvgOptions(colorReady, options);
+    if (name === 'xmlns:xlink' && value !== XLINK_NAMESPACE) {
+      hookEvent.keepAttr = false;
+      return;
+    }
+
+    if (name.startsWith('xmlns:') && name !== 'xmlns:xlink') {
+      hookEvent.keepAttr = false;
+      return;
+    }
+
+    if (DIRECT_REFERENCE_ATTRIBUTES.has(name) && !isSafeLocalReference(value)) {
+      hookEvent.keepAttr = false;
+      return;
+    }
+
+    if (hasUnsafeUrlFunction(value)) {
+      hookEvent.keepAttr = false;
+    }
+  });
+
+  return purifier;
+}
+
+export function createPrepareSvgMarkup(resolveRuntime: SvgSanitizerRuntimeResolver) {
+  return function prepareSvgMarkup(markup: string, options: PrepareSvgOptions = {}): string {
+    if (typeof markup !== 'string' || markup.trim().length === 0) {
+      throw new Error('InlineSVG expected non-empty SVG markup.');
+    }
+
+    const { DOMParser: RuntimeDOMParser, purifier } = resolveRuntime();
+    const originalSvg = extractSvgElement(markup);
+
+    if (!originalSvg) {
+      throw new Error('InlineSVG expected markup containing a root <svg> element.');
+    }
+
+    assertSafeRootSvg(originalSvg, RuntimeDOMParser);
+
+    const sanitized = purifier.sanitize(markup, SVG_SANITIZE_CONFIG);
+    const sanitizedString = typeof sanitized === 'string' ? sanitized : String(sanitized);
+    const withoutUnsafeUrlFunctions = removeUnsafeUrlFunctionAttributes(sanitizedString);
+    const extracted = extractSvgElement(withoutUnsafeUrlFunctions);
+
+    if (!extracted) {
+      throw new Error('InlineSVG expected markup containing a root <svg> element.');
+    }
+
+    assertSafeRootSvg(extracted, RuntimeDOMParser);
+
+    const colorReady = options.currentColor === true ? rewritePaintAttributesToCurrentColor(extracted) : extracted;
+    return applyRootSvgOptions(colorReady, options);
+  };
 }
 
 export function rewritePaintAttributesToCurrentColor(svg: string): string {
@@ -247,11 +321,11 @@ function removeUnsafeUrlFunctionAttributes(markup: string): string {
 }
 
 function hasUnsafeUrlFunction(value: string): boolean {
-  const urlPattern = /url\(\s*(['"]?)(.*?)\1\s*\)/gi;
+  const urlPattern = /url\(\s*([^)]*)\)/gi;
   let match: RegExpExecArray | null;
 
   while ((match = urlPattern.exec(value)) !== null) {
-    if (!isSafeUrlReference(match[2] ?? '')) {
+    if (!isSafeLocalReference(match[1] ?? '')) {
       return true;
     }
   }
@@ -259,21 +333,56 @@ function hasUnsafeUrlFunction(value: string): boolean {
   return false;
 }
 
-function isSafeUrlReference(value: string): boolean {
-  const normalized = decodeBasicEntities(value).trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+function isSafeLocalReference(value: string): boolean {
+  const normalized = normalizeReference(value);
+  return normalized.startsWith('#');
+}
 
-  return normalized.startsWith('#') || normalized.startsWith('http://') || normalized.startsWith('https://');
+function normalizeReference(value: string): string {
+  let normalized = decodeBasicEntities(value).trim();
+  normalized = normalized.replace(/^['"]|['"]$/g, '').trim();
+  return normalized.replace(/[\u0000-\u0020\u007f]+/g, '').toLowerCase();
 }
 
 function decodeBasicEntities(value: string): string {
-  return value
-    .replace(/&quot;/gi, '"')
-    .replace(/&#34;/g, '"')
-    .replace(/&#x22;/gi, '"')
-    .replace(/&apos;/gi, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/gi, "'")
-    .replace(/&amp;/gi, '&');
+  return value.replace(/&(#x[\da-f]+|#\d+|amp|apos|gt|lt|quot);?/gi, (entity, body: string) => {
+    const normalized = body.toLowerCase();
+
+    if (normalized.startsWith('#x')) {
+      return decodeCodePoint(Number.parseInt(normalized.slice(2), 16), entity);
+    }
+
+    if (normalized.startsWith('#')) {
+      return decodeCodePoint(Number.parseInt(normalized.slice(1), 10), entity);
+    }
+
+    switch (normalized) {
+      case 'amp':
+        return '&';
+      case 'apos':
+        return "'";
+      case 'gt':
+        return '>';
+      case 'lt':
+        return '<';
+      case 'quot':
+        return '"';
+      default:
+        return entity;
+    }
+  });
+}
+
+function decodeCodePoint(codePoint: number, fallback: string): string {
+  if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+    return fallback;
+  }
+
+  try {
+    return String.fromCodePoint(codePoint);
+  } catch {
+    return fallback;
+  }
 }
 
 function extractSvgElement(markup: string): string | null {
@@ -283,11 +392,30 @@ function extractSvgElement(markup: string): string | null {
   }
 
   const end = markup.toLowerCase().lastIndexOf('</svg>');
-  if (end < start) {
+  if (end >= start) {
+    return markup.slice(start, end + '</svg>'.length).trim();
+  }
+
+  const selfClosing = markup.slice(start).match(/^<svg\b(?:"[^"]*"|'[^']*'|[^'">])*\/\s*>/i);
+  if (!selfClosing) {
     return null;
   }
 
-  return markup.slice(start, end + '</svg>'.length).trim();
+  return selfClosing[0].replace(/\/\s*>$/, '></svg>').trim();
+}
+
+function assertSafeRootSvg(markup: string, RuntimeDOMParser: typeof DOMParser): void {
+  const document = new RuntimeDOMParser().parseFromString(markup, 'image/svg+xml');
+  const parserErrors = document.getElementsByTagName('parsererror');
+  const root = document.documentElement;
+
+  if (parserErrors.length > 0 || !root || root.localName !== 'svg') {
+    throw new Error('InlineSVG expected valid SVG markup.');
+  }
+
+  if (root.namespaceURI !== null && root.namespaceURI !== SVG_NAMESPACE) {
+    throw new Error('InlineSVG expected an SVG root namespace.');
+  }
 }
 
 function applyRootSvgOptions(svg: string, options: PrepareSvgOptions): string {
@@ -298,7 +426,7 @@ function applyRootSvgOptions(svg: string, options: PrepareSvgOptions): string {
 
   const openingTag = svg.slice(0, openingEnd + 1);
   const closingAndBody = svg.slice(openingEnd + 1);
-  const attributes = parseAttributes(openingTag.slice('<svg'.length, -1));
+  const attributes = parseAttributes(openingTag.slice('<svg'.length, -1).replace(/\/\s*$/, ''));
 
   if (options.removeDimensions || options.fillWidth || options.fillHeight) {
     deleteAttribute(attributes, 'width');
