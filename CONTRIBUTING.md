@@ -1,6 +1,6 @@
 # Contributing and codebase guide
 
-This repository contains the initial v1 implementation of `@yves/inline-svg`: a small React/Next.js package for rendering sanitized inline SVGs from server-provided SVG markup or browser-fetched SVG URLs.
+This repository contains the initial v1 implementation of `yvez-inline-svg`: a small React/Next.js package for rendering sanitized inline SVGs from server-provided SVG markup or browser-fetched SVG URLs.
 
 The package is intentionally narrow. v1 owns the React component API, Next.js-friendly client boundary, URL loading shell, SSR behavior for raw markup, sanitizer baseline, dimension helpers, and `color`-driven `currentColor` rewriting that preserves source colors when no color is supplied. Avoid expanding it into a broad SVG loader unless the public scope changes.
 

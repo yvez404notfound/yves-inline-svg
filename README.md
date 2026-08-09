@@ -1,4 +1,4 @@
-# @yves/inline-svg
+# yves-inline-svg
 
 Small React/Next.js component for rendering sanitized inline SVGs from either raw SVG markup or SVG URLs.
 
@@ -9,7 +9,7 @@ Contributors can read [CONTRIBUTING.md](./CONTRIBUTING.md) for the codebase map,
 ## Install
 
 ```sh
-npm install @yves/inline-svg
+npm install yves-inline-svg
 ```
 
 Peer dependency: React 18 or 19. Runtime Node support is `>=18`.
@@ -17,7 +17,7 @@ Peer dependency: React 18 or 19. Runtime Node support is `>=18`.
 ## React usage
 
 ```tsx
-import InlineSVG from '@yves/inline-svg';
+import InlineSVG from "yves-inline-svg";
 
 const check = `
   <svg viewBox="0 0 24 24" width="24" height="24">
@@ -26,15 +26,15 @@ const check = `
 `;
 
 export function StatusIcon() {
-  return (
-    <InlineSVG
-      svg={check}
-      title="Complete"
-      size={20}
-      color="seagreen"
-      removeDimensions
-    />
-  );
+	return (
+		<InlineSVG
+			svg={check}
+			title="Complete"
+			size={20}
+			color="seagreen"
+			removeDimensions
+		/>
+	);
 }
 ```
 
@@ -45,20 +45,32 @@ export function StatusIcon() {
 Use `src` for URLs emitted by your bundler or framework. The component accepts either a string URL or a static asset object with a `src` field.
 
 ```tsx
-import InlineSVG from '@yves/inline-svg';
-import iconUrl from './icon.svg?url';
+import InlineSVG from "yves-inline-svg";
+import iconUrl from "./icon.svg?url";
 
 export function ViteIcon() {
-  return <InlineSVG src={iconUrl} title="Settings" fallback={<span aria-hidden />} />;
+	return (
+		<InlineSVG
+			src={iconUrl}
+			title="Settings"
+			fallback={<span aria-hidden />}
+		/>
+	);
 }
 ```
 
 ```tsx
-import InlineSVG from '@yves/inline-svg';
-import icon from './icon.svg'; // supported when your toolchain emits a URL or { src: string }
+import InlineSVG from "yves-inline-svg";
+import icon from "./icon.svg"; // supported when your toolchain emits a URL or { src: string }
 
 export function ImportedIcon() {
-  return <InlineSVG src={icon} title="Account" size="1.25rem" />;
+	return (
+		<InlineSVG
+			src={icon}
+			title="Account"
+			size="1.25rem"
+		/>
+	);
 }
 ```
 
@@ -67,18 +79,23 @@ URL sources are fetched in the browser after hydration. Provide `fallback` when 
 ## Remote URL example
 
 ```tsx
-import InlineSVG from '@yves/inline-svg';
+import InlineSVG from "yves-inline-svg";
 
 export function RemoteBadge() {
-  return (
-    <InlineSVG
-      src="https://cdn.example.com/badges/pro.svg"
-      title="Pro plan"
-      loading="lazy"
-      fallback={<span className="icon-placeholder" aria-hidden />}
-      onError={(error) => console.error(error)}
-    />
-  );
+	return (
+		<InlineSVG
+			src="https://cdn.example.com/badges/pro.svg"
+			title="Pro plan"
+			loading="lazy"
+			fallback={
+				<span
+					className="icon-placeholder"
+					aria-hidden
+				/>
+			}
+			onError={(error) => console.error(error)}
+		/>
+	);
 }
 ```
 
@@ -92,10 +109,17 @@ Remote SVGs are fetched, sanitized, then injected. Prefer URLs you control and k
 
 ```tsx
 // app/page.tsx
-import InlineSVG from '@yves/inline-svg';
+import InlineSVG from "yves-inline-svg";
 
 export default function Page() {
-  return <InlineSVG src="/icons/check.svg" title="Ready" size={24} color="#16a34a" />;
+	return (
+		<InlineSVG
+			src="/icons/check.svg"
+			title="Ready"
+			size={24}
+			color="#16a34a"
+		/>
+	);
 }
 ```
 
@@ -105,14 +129,24 @@ For deterministic inline SVG in the initial HTML, read or generate the SVG marku
 
 ```tsx
 // app/page.tsx
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import InlineSVG from '@yves/inline-svg';
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import InlineSVG from "yves-inline-svg";
 
 export default async function Page() {
-  const svg = await readFile(join(process.cwd(), 'public/icons/logo.svg'), 'utf8');
+	const svg = await readFile(
+		join(process.cwd(), "public/icons/logo.svg"),
+		"utf8",
+	);
 
-  return <InlineSVG svg={svg} title="Acme" removeDimensions width={120} />;
+	return (
+		<InlineSVG
+			svg={svg}
+			title="Acme"
+			removeDimensions
+			width={120}
+		/>
+	);
 }
 ```
 
@@ -148,7 +182,7 @@ Sanitization reduces risk; it is not a complete trust model for arbitrary third-
 
 ## Why this exists
 
-Existing packages such as broad inline-SVG loaders solve many edge cases. `@yves/inline-svg` aims for a smaller v1 surface instead:
+Existing packages such as broad inline-SVG loaders solve many edge cases. `yves-inline-svg` aims for a smaller v1 surface instead:
 
 - a small Next.js-aware React API;
 - an explicit SSR-aware source boundary (`svg` renders on the server, `src` fetches in the browser);
