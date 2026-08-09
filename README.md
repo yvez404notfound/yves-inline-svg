@@ -1,4 +1,4 @@
-# yves-inline-svg
+# yvez-inline-svg
 
 Small React/Next.js component for rendering sanitized inline SVGs from either raw SVG markup or SVG URLs.
 
@@ -9,7 +9,7 @@ Contributors can read [CONTRIBUTING.md](./CONTRIBUTING.md) for the codebase map,
 ## Install
 
 ```sh
-npm install yves-inline-svg
+npm install yvez-inline-svg
 ```
 
 Peer dependency: React 18 or 19. Runtime Node support is `>=18`.
@@ -17,7 +17,7 @@ Peer dependency: React 18 or 19. Runtime Node support is `>=18`.
 ## React usage
 
 ```tsx
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 
 const check = `
   <svg viewBox="0 0 24 24" width="24" height="24">
@@ -45,7 +45,7 @@ export function StatusIcon() {
 Use `src` for URLs emitted by your bundler or framework. The component accepts either a string URL or a static asset object with a `src` field.
 
 ```tsx
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 import iconUrl from "./icon.svg?url";
 
 export function ViteIcon() {
@@ -60,7 +60,7 @@ export function ViteIcon() {
 ```
 
 ```tsx
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 import icon from "./icon.svg"; // supported when your toolchain emits a URL or { src: string }
 
 export function ImportedIcon() {
@@ -79,7 +79,7 @@ URL sources are fetched in the browser after hydration. Provide `fallback` when 
 ## Remote URL example
 
 ```tsx
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 
 export function RemoteBadge() {
 	return (
@@ -109,7 +109,7 @@ Remote SVGs are fetched, sanitized, then injected. Prefer URLs you control and k
 
 ```tsx
 // app/page.tsx
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 
 export default function Page() {
 	return (
@@ -131,7 +131,7 @@ For deterministic inline SVG in the initial HTML, read or generate the SVG marku
 // app/page.tsx
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import InlineSVG from "yves-inline-svg";
+import InlineSVG from "yvez-inline-svg";
 
 export default async function Page() {
 	const svg = await readFile(
@@ -182,7 +182,7 @@ Sanitization reduces risk; it is not a complete trust model for arbitrary third-
 
 ## Why this exists
 
-Existing packages such as broad inline-SVG loaders solve many edge cases. `yves-inline-svg` aims for a smaller v1 surface instead:
+Existing packages such as broad inline-SVG loaders solve many edge cases. `yvez-inline-svg` aims for a smaller v1 surface instead:
 
 - a small Next.js-aware React API;
 - an explicit SSR-aware source boundary (`svg` renders on the server, `src` fetches in the browser);
