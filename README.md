@@ -1,4 +1,6 @@
 # yvez-inline-svg
+![NPM Version](https://img.shields.io/npm/v/yvez-inline-svg)
+![NPM Downloads](https://img.shields.io/npm/dm/yvez-inline-svg)
 
 Small React/Next.js component for rendering sanitized inline SVGs from either raw SVG markup or SVG URLs.
 
