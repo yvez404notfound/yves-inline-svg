@@ -1,0 +1,42 @@
+name: Publish to npm
+
+on:
+  workflow_run:
+    workflows:
+      - Lint, test, and build
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  publish:
+    name: Publish package
+    if: ${{github.event.workflow_run.conclusion == 'success'}}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.workflow_run.head_sha}}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish
+        run: npm publish --access public

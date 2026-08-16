@@ -1,6 +1,6 @@
 {
 	"name": "yvez-inline-svg",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Small React/Next.js component for safely inlining SVG markup and URL-loaded SVGs.",
 	"repository": {
 		"type": "git",
